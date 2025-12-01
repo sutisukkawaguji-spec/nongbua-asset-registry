@@ -1,0 +1,1 @@
+# nongbua-asset-registry

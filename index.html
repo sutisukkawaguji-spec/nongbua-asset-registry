@@ -1,327 +1,223 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nong Bua Lamphu Asset Registry</title>
+  <title>ระบบตรวจสอบทะเบียนที่ราชพัสดุ | ธนารักษ์พื้นที่หนองบัวลำภู</title>
 
-  <!-- Google Fonts: Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Sarabun', 'sans-serif'],
-          },
+          fontFamily: { sans: ['Sarabun', 'sans-serif'] },
           colors: {
-            royal: {
-              DEFAULT: '#1e40af', // Royal Blue
-              light: '#3b82f6',
-              dark: '#1e3a8a',
-            },
-            gold: {
-              DEFAULT: '#f59e0b', // Gold
-              light: '#fbbf24',
-              dark: '#d97706',
-            }
+            royal: { DEFAULT: '#1e40af', light: '#3b82f6', dark: '#1e3a8a' },
+            gold: { DEFAULT: '#f59e0b', light: '#fbbf24', dark: '#d97706' }
           }
         }
       }
     }
   </script>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <!-- Leaflet.draw -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
   <style>
     /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .glass {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    /* Map height adjustment */
-    .map-container {
-      height: calc(100vh - 64px);
-    }
-
-    @media (max-width: 768px) {
-      .map-container {
-        height: 50vh;
-      }
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
     }
   </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 font-sans overflow-hidden">
 
-  <!-- CONFIG -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzohQbT54dE8_L2uSfkKXR0NQcvV4iOCCeEKFw6vdGyCIUX5HiXFhYovfqH3gWgG28f/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbyjkhHmpXBJ3KsZ22i7TD_gy-GP5cgHcJ5p7eku9UmUhNHG-64S9XJopZEoXO7MGLSL/exec"; 
   </script>
 
-  <!-- LOGIN OVERLAY -->
   <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-cover bg-center"
-    style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+    style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2070&q=80');">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
 
-    <div class="relative w-full max-w-md p-8 glass rounded-2xl shadow-2xl mx-4">
+    <div class="relative w-full max-w-md p-8 glass rounded-2xl shadow-2xl mx-4 border-t-4 border-gold">
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-white mb-4 shadow-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-8 h-8">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
-          </svg>
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-white mb-4 shadow-lg ring-4 ring-white/50">
+          <span class="text-2xl">🏛️</span>
         </div>
-        <h1 class="text-2xl font-bold text-slate-800">Asset Registry</h1>
-        <p class="text-slate-600">Nong Bua Lamphu Treasury Office</p>
+        <h1 class="text-xl font-bold text-slate-900">สำนักงานธนารักษ์พื้นที่หนองบัวลำภู</h1>
+        <p class="text-slate-600">ระบบตรวจสอบทะเบียนที่ราชพัสดุ</p>
       </div>
 
-      <form id="loginForm" class="space-y-6">
+      <form id="loginForm" class="space-y-5">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">อีเมลผู้ใช้งาน</label>
           <input type="email" id="email" required
-            class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-royal focus:border-royal outline-none transition bg-white/80"
-            placeholder="user@example.com">
+            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-royal focus:border-royal outline-none bg-white/90"
+            placeholder="user@treasury.go.th">
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน</label>
           <input type="password" id="password" required
-            class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-royal focus:border-royal outline-none transition bg-white/80"
+            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-royal focus:border-royal outline-none bg-white/90"
             placeholder="••••••••">
         </div>
 
-        <div class="flex items-center justify-between">
-          <label class="flex items-center space-x-2 cursor-pointer">
-            <input type="checkbox" id="rememberMe" class="w-4 h-4 text-royal rounded border-slate-300 focus:ring-royal">
-            <span class="text-sm text-slate-600">Remember me</span>
-          </label>
-          <button type="button" id="btnOpenRegister"
-            class="text-sm text-royal hover:underline font-medium">Register</button>
+        <div class="flex items-center justify-between pt-2">
+          <button type="button" id="btnOpenRegister" class="text-sm text-royal hover:underline font-medium">ลงทะเบียนผู้ใช้ใหม่</button>
         </div>
 
         <button type="submit" id="btnLogin"
-          class="w-full py-2.5 bg-royal hover:bg-royal-dark text-white font-semibold rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center gap-2">
-          <span>Sign In</span>
-          <svg id="loginSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
-          </svg>
+          class="w-full py-3 bg-royal hover:bg-royal-dark text-white font-semibold rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center gap-2">
+          <span>เข้าสู่ระบบ</span>
+          <div id="loginSpinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
         </button>
-        <p id="loginMsg" class="text-center text-red-600 text-sm font-medium min-h-[20px]"></p>
+        <p id="loginMsg" class="text-center text-red-600 text-sm font-medium min-h-[20px] mt-2"></p>
+      </form>
+      
+      <div class="mt-6 text-center text-xs text-slate-500">
+        © 2025 กรมธนารักษ์ - พัฒนาเพื่อการบริหารจัดการภาครัฐ
+      </div>
+    </div>
+  </div>
+
+  <div id="registerOverlay" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 animate-fade-in-up">
+      <h2 class="text-xl font-bold text-slate-800 mb-4 border-b pb-2">ลงทะเบียนผู้ใช้งานใหม่</h2>
+      <form id="regForm" class="space-y-4">
+        <div>
+            <label class="text-sm font-medium text-slate-700">อีเมล</label>
+            <input id="reg_email" type="email" class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none">
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">รหัสผ่าน</label>
+            <input id="reg_password" type="password" class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none">
+        </div>
+        <div>
+            <label class="text-sm font-medium text-slate-700">หน่วยงาน</label>
+            <input id="reg_agency" type="text" class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">สิทธิ์เข้าถึงแปลง (ระบุเลขทะเบียน คั่นด้วยจุลภาค)</label>
+          <input id="reg_ap" type="text" placeholder="เช่น 1-นภ-1, 1-นภ-2" class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none">
+        </div>
+        <div class="flex gap-3 pt-4">
+          <button type="button" id="btnRegSubmit" class="flex-1 bg-royal text-white py-2 rounded-lg hover:bg-royal-dark transition font-medium">ยืนยันการสมัคร</button>
+          <button type="button" id="btnRegCancel" class="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 transition font-medium">ยกเลิก</button>
+        </div>
+        <p id="regMsg" class="text-center text-sm min-h-[20px] text-blue-600"></p>
       </form>
     </div>
   </div>
 
-  <!-- MAIN APP -->
   <div id="app" class="hidden flex flex-col h-screen">
 
-    <!-- Header -->
-    <header
-      class="bg-white border-b border-slate-200 shadow-sm z-30 h-16 flex items-center justify-between px-4 lg:px-6">
+    <header class="bg-white border-b border-slate-200 shadow-sm z-30 h-16 flex items-center justify-between px-4 lg:px-6 relative">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-royal flex items-center justify-center text-white shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-          </svg>
+          <span class="text-lg">🇹🇭</span>
         </div>
         <div>
-          <h1 class="font-bold text-lg text-slate-800 leading-tight">Asset Registry</h1>
-          <p class="text-xs text-slate-500 hidden sm:block">Nong Bua Lamphu Treasury Office</p>
+          <h1 class="font-bold text-lg text-slate-800 leading-tight">ระบบทะเบียนที่ราชพัสดุ</h1>
+          <p class="text-xs text-royal hidden sm:block">สำนักงานธนารักษ์พื้นที่หนองบัวลำภู</p>
         </div>
       </div>
 
       <div class="flex items-center gap-4">
         <div class="text-right hidden md:block">
-          <div id="userEmail" class="text-sm font-medium text-slate-800">user@example.com</div>
-          <div id="userRole" class="text-xs text-slate-500 uppercase tracking-wider">Viewer</div>
+          <div id="userEmail" class="text-sm font-medium text-slate-800"></div>
+          <div id="userRole" class="text-xs text-slate-500 uppercase tracking-wider"></div>
         </div>
-        <button id="btnLogout" class="p-2 text-slate-400 hover:text-red-500 transition rounded-full hover:bg-red-50"
-          title="Logout">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-            stroke="currentColor" class="w-6 h-6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        <button id="btnLogout" class="p-2 text-slate-400 hover:text-red-500 transition rounded-full hover:bg-red-50" title="ออกจากระบบ">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
           </svg>
         </button>
       </div>
     </header>
 
-    <!-- Mobile Tabs -->
     <div class="md:hidden flex border-b border-slate-200 bg-white">
-      <button id="tabMap" class="flex-1 py-3 text-sm font-medium text-royal border-b-2 border-royal transition">Map
-        View</button>
-      <button id="tabList" class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 transition">Data
-        List</button>
+      <button id="tabMap" class="flex-1 py-3 text-sm font-medium text-royal border-b-2 border-royal transition">แผนที่</button>
+      <button id="tabList" class="flex-1 py-3 text-sm font-medium text-slate-500 hover:text-slate-700 transition">ข้อมูลรายการ</button>
     </div>
 
-    <!-- Content -->
     <div class="flex-1 flex overflow-hidden relative">
 
-      <!-- Left: Map -->
       <div id="mapPanel" class="w-full md:w-[60%] h-full relative z-10 transition-all duration-300">
-        <div id="map" class="w-full h-full bg-slate-100"></div>
-
-        <!-- Map Controls Overlay -->
-        <div class="absolute top-4 right-4 z-[400] flex flex-col gap-2">
-          <div class="bg-white rounded-lg shadow-md p-1 flex flex-col gap-1">
-            <button id="btnLocate" class="p-2 hover:bg-slate-100 rounded text-slate-600" title="My Location">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-              </svg>
-            </button>
-          </div>
+        <div id="map" class="w-full h-full bg-slate-100 z-0"></div>
+        <div class="absolute top-4 right-4 z-[400]">
+          <button id="btnLocate" class="bg-white p-2 rounded shadow text-slate-600 hover:bg-slate-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <!-- Right: Data Panel -->
-      <div id="listPanel"
-        class="w-full md:w-[40%] h-full bg-white border-l border-slate-200 overflow-y-auto absolute md:relative top-0 left-0 md:left-auto z-20 hidden md:block">
+      <div id="listPanel" class="w-full md:w-[40%] h-full bg-white border-l border-slate-200 overflow-y-auto absolute md:relative top-0 left-0 md:left-auto z-20 hidden md:block">
         <div class="p-6 space-y-6">
 
-          <!-- Search & Filter -->
           <div class="space-y-3">
             <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="w-5 h-5 text-royal">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-              Search & Select
+              <span class="text-royal">🔍</span> ค้นหาและเลือกแปลง
             </h2>
             <div class="relative">
-              <input type="text" id="agencySearch" placeholder="Search agency, usage..."
+              <input type="text" id="agencySearch" placeholder="ค้นหาหน่วยงาน, การใช้ประโยชน์..."
                 class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-royal/50 focus:border-royal outline-none transition text-sm">
-              <svg class="absolute left-3 top-2.5 w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg class="absolute left-3 top-2.5 w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Parcel Registry
-                No.</label>
-              <select id="parcelSelect"
-                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-royal/50 outline-none disabled:bg-slate-100 disabled:text-slate-400">
-                <option value="">Select a parcel...</option>
+              <label class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">เลือกเลขทะเบียนที่ดิน</label>
+              <select id="parcelSelect" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-royal/50 outline-none">
+                <option value="">-- กรุณาเลือก --</option>
               </select>
             </div>
           </div>
 
           <hr class="border-slate-100">
 
-          <!-- Parcel Info Card -->
           <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-              <h3 class="font-semibold text-slate-700 text-sm">Parcel Information</h3>
-              <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700">Selected</span>
-            </div>
-            <div class="p-0">
-              <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                  <thead class="text-xs text-slate-500 uppercase bg-slate-50/50">
-                    <tr>
-                      <th class="px-4 py-2 font-medium">No.</th>
-                      <th class="px-4 py-2 font-medium">Agency / Detail</th>
-                      <th class="px-4 py-2 font-medium">Area</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tblParcels" class="divide-y divide-slate-100">
-                    <tr>
-                      <td colspan="3" class="px-4 py-3 text-center text-slate-400 italic">No parcel selected</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Utilization Card -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
-              <h3 class="font-semibold text-slate-700 text-sm">Land Utilization</h3>
+            <div class="bg-blue-50 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
+              <h3 class="font-bold text-royal text-sm">ข้อมูลแปลงที่ดิน</h3>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm text-left">
-                <thead class="text-xs text-slate-500 uppercase bg-slate-50/50">
-                  <tr>
-                    <th class="px-4 py-2 font-medium">Reg No.</th>
-                    <th class="px-4 py-2 font-medium">Detail</th>
-                    <th class="px-4 py-2 font-medium">Used Area</th>
-                  </tr>
-                </thead>
-                <tbody id="tblUtil" class="divide-y divide-slate-100">
-                  <tr>
-                    <td colspan="3" class="px-4 py-3 text-center text-slate-400 italic">No data</td>
-                  </tr>
+                <tbody id="tblParcels" class="divide-y divide-slate-100">
+                  <tr><td class="px-4 py-4 text-center text-slate-400">ยังไม่ได้เลือกแปลง</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- Buildings Card -->
           <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
-              <h3 class="font-semibold text-slate-700 text-sm">Buildings</h3>
-              <div class="flex gap-2">
-                <button id="btnDrawB"
-                  class="hidden text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-2 py-1 rounded shadow-sm transition">✎
-                  Draw</button>
-              </div>
+            <div class="bg-yellow-50 px-4 py-3 border-b border-yellow-100">
+              <h3 class="font-bold text-yellow-800 text-sm">สิ่งปลูกสร้างในแปลง</h3>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-sm text-left">
-                <thead class="text-xs text-slate-500 uppercase bg-slate-50/50">
+                <thead class="text-xs text-slate-500 uppercase bg-slate-50">
                   <tr>
-                    <th class="px-4 py-2 font-medium">Reg No.</th>
-                    <th class="px-4 py-2 font-medium">Detail</th>
-                    <th class="px-4 py-2 font-medium">Status</th>
+                    <th class="px-4 py-2 font-medium">ทะเบียน</th>
+                    <th class="px-4 py-2 font-medium">รายละเอียด</th>
                   </tr>
                 </thead>
                 <tbody id="tblBuildings" class="divide-y divide-slate-100">
-                  <tr>
-                    <td colspan="3" class="px-4 py-3 text-center text-slate-400 italic">No data</td>
-                  </tr>
+                  <tr><td colspan="2" class="px-4 py-4 text-center text-slate-400">ไม่มีข้อมูล</td></tr>
                 </tbody>
               </table>
             </div>
@@ -332,43 +228,12 @@
     </div>
   </div>
 
-  <!-- Register Overlay -->
-  <div id="registerOverlay"
-    class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4">
-      <h2 class="text-xl font-bold text-slate-800 mb-4">Register New User</h2>
-      <form id="regForm" class="space-y-4">
-        <div><label class="text-sm font-medium text-slate-700">Email</label><input id="reg_email" type="email"
-            class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none"></div>
-        <div><label class="text-sm font-medium text-slate-700">Password</label><input id="reg_password" type="password"
-            class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none"></div>
-        <div><label class="text-sm font-medium text-slate-700">Agency</label><input id="reg_agency" type="text"
-            class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none"></div>
-        <div>
-          <label class="text-sm font-medium text-slate-700">Allowed Parcels (CSV)</label>
-          <input id="reg_ap" type="text" placeholder="e.g. 1-NP-2, 3-NP-4"
-            class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-royal focus:border-royal outline-none">
-          <p class="text-xs text-slate-500 mt-1">Comma separated parcel numbers.</p>
-        </div>
-        <div class="flex gap-3 pt-2">
-          <button type="button" id="btnRegSubmit"
-            class="flex-1 bg-royal text-white py-2 rounded-lg hover:bg-royal-dark transition">Register</button>
-          <button type="button" id="btnRegCancel"
-            class="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 transition">Cancel</button>
-        </div>
-        <p id="regMsg" class="text-center text-sm min-h-[20px]"></p>
-      </form>
-    </div>
-  </div>
-
-  <!-- JAVASCRIPT LOGIC -->
   <script>
     // --- STATE ---
     const state = {
       user: null,
       parcels: [],
-      selectedParcelNo: null,
-      selectedBuilding: null
+      selectedParcelNo: null
     };
 
     // --- DOM ELEMENTS ---
@@ -381,52 +246,40 @@
       loginSpinner: document.getElementById('loginSpinner'),
       userEmail: document.getElementById('userEmail'),
       userRole: document.getElementById('userRole'),
-      btnLogout: document.getElementById('btnLogout'),
       parcelSelect: document.getElementById('parcelSelect'),
       agencySearch: document.getElementById('agencySearch'),
       tblParcels: document.getElementById('tblParcels'),
-      tblUtil: document.getElementById('tblUtil'),
       tblBuildings: document.getElementById('tblBuildings'),
+      // Tabs
       tabMap: document.getElementById('tabMap'),
       tabList: document.getElementById('tabList'),
       mapPanel: document.getElementById('mapPanel'),
       listPanel: document.getElementById('listPanel'),
-      btnOpenRegister: document.getElementById('btnOpenRegister'),
+      // Register
       registerOverlay: document.getElementById('registerOverlay'),
+      btnOpenRegister: document.getElementById('btnOpenRegister'),
       btnRegSubmit: document.getElementById('btnRegSubmit'),
       btnRegCancel: document.getElementById('btnRegCancel'),
-      regMsg: document.getElementById('regMsg'),
+      regMsg: document.getElementById('regMsg')
     };
 
     // --- API HELPER ---
-    async function apiCall(action, method = 'GET', payload = {}) {
-      if (API_URL.includes("PASTE_YOUR")) {
-        alert("Please configure the API_URL in index.html first!");
+    async function apiCall(action, payload = {}) {
+      if (API_URL.includes("XXXX")) {
+        alert("กรุณาแก้ไข API_URL ในไฟล์ index.html ก่อนใช้งาน");
         throw new Error("API_URL not configured");
       }
 
-      let url = `${API_URL}?action=${action}`;
+      // ใช้ POST สำหรับทุก request เพื่อรองรับ payload ใหญ่และปลอดภัยกว่า
       const options = {
-        method: method,
-        mode: 'cors', // Important for external access
+        method: 'POST',
+        // GAS Web App ต้องการ text/plain เพื่อเลี่ยง CORS Preflight ที่ซับซ้อนในบาง browser
+        // แต่เราจัดการ Header Access-Control-Allow-Origin: * ไว้แล้วที่ฝั่ง Server
+        body: JSON.stringify({ action, ...payload })
       };
 
-      if (method === 'POST') {
-        // Apps Script doPost needs text/plain or similar to avoid preflight issues sometimes, 
-        // but standard fetch with CORS headers in GAS should work with application/json now if handled correctly.
-        // To be safe with GAS simple triggers, we often use text/plain and parse manually, 
-        // but since we implemented JSON.parse(e.postData.contents) in backend, we can try standard JSON.
-        // However, 'no-cors' mode would be opaque. We want 'cors'.
-        options.headers = { 'Content-Type': 'text/plain;charset=utf-8' }; // GAS handles text/plain easier without strict CORS preflight checks on content-type
-        options.body = JSON.stringify(payload);
-      } else {
-        // GET params
-        const params = new URLSearchParams(payload).toString();
-        if (params) url += `&${params}`;
-      }
-
       try {
-        const res = await fetch(url, options);
+        const res = await fetch(API_URL, options);
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const data = await res.json();
         return data;
@@ -437,52 +290,43 @@
     }
 
     // --- MAP SETUP ---
-    let map, parcelsLayer, buildingsLayer, drawControl, drawLayer;
+    let map, parcelsLayer, buildingsLayer;
 
     function initMap() {
       if (map) return;
-      map = L.map('map').setView([15.22, 102.4], 10); // Default NBL view
+      // พิกัดหนองบัวลำภู (City Hall area approximation)
+      map = L.map('map').setView([17.221, 102.434], 13); 
 
-      // Layers
-      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
-      const esri = L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
 
-      osm.addTo(map);
-
-      L.control.layers({ "Roads": osm, "Satellite": esri }).addTo(map);
-
-      // Feature Layers
+      // Layer สำหรับ Parcel (เส้นขอบแดง)
       parcelsLayer = L.geoJSON(null, {
         style: { color: '#ef4444', weight: 2, fillOpacity: 0.1 }
       }).addTo(map);
 
+      // Layer สำหรับ Buildings (จุดสีน้ำเงิน)
       buildingsLayer = L.geoJSON(null, {
         pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 6, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.8 }),
         style: { color: '#3b82f6', weight: 2 }
       }).addTo(map);
 
-      // Draw Control (Admin/Editor only - logic later)
-      drawLayer = L.featureGroup().addTo(map);
-      drawControl = new L.Control.Draw({
-        edit: { featureGroup: drawLayer },
-        draw: { polygon: true, marker: true, circle: false, rectangle: false, polyline: false, circlemarker: false }
-      });
-
-      // Locate
+      // ปุ่ม Locate me
       document.getElementById('btnLocate').addEventListener('click', () => {
         map.locate({ setView: true, maxZoom: 16 });
       });
       map.on('locationfound', e => {
-        L.circleMarker(e.latlng, { radius: 8, color: 'white', fillColor: '#1e40af', fillOpacity: 1 }).addTo(map).bindPopup("You are here").openPopup();
+        L.circleMarker(e.latlng).addTo(map).bindPopup("ตำแหน่งของคุณ").openPopup();
       });
     }
 
-    // --- UI LOGIC ---
+    // --- LOGIC ---
 
-    // Login
+    // 1. LOGIN
     el.loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
       el.btnLogin.disabled = true;
@@ -490,68 +334,62 @@
       el.loginMsg.textContent = "";
 
       try {
-        // Use POST for login to secure pwd in body
-        const res = await apiCall('login', 'POST', { email, password });
-
+        const res = await apiCall('login', { email, password });
         if (res.allowed) {
-          state.user = { email, role: 'viewer' }; // Default, will update with initial data
-          loadInitialData(email);
+          state.user = { email };
+          await loadInitialData(email);
         } else {
-          el.loginMsg.textContent = "Invalid email or password.";
+          el.loginMsg.textContent = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
           el.btnLogin.disabled = false;
           el.loginSpinner.classList.add('hidden');
         }
       } catch (err) {
-        el.loginMsg.textContent = "Connection failed. Check API URL.";
+        el.loginMsg.textContent = "เชื่อมต่อระบบไม่ได้ (ตรวจสอบ URL)";
         el.btnLogin.disabled = false;
         el.loginSpinner.classList.add('hidden');
       }
     });
 
+    // 2. LOAD DATA
     async function loadInitialData(email) {
       try {
-        const res = await apiCall('getInitialData', 'GET', { email });
+        const res = await apiCall('getInitialData', { email });
         if (!res.ok) throw new Error(res.message);
 
         state.user = res.me;
         state.parcels = res.parcels || [];
 
-        // Update UI
+        // UI Update
         el.userEmail.textContent = state.user.email;
         el.userRole.textContent = state.user.role;
-
-        // Populate Select
         populateParcelSelect(state.parcels);
 
-        // Switch View
+        // Switch Screen
         el.loginOverlay.classList.add('hidden');
         el.app.classList.remove('hidden');
 
-        // Init Map (needs container visible)
+        // Init Map
         setTimeout(() => {
           initMap();
           map.invalidateSize();
-          // Render initial bounds if parcels exist
-          if (state.parcels.length > 0) {
-            renderParcelsOnMap(state.parcels);
-          }
-        }, 100);
+          renderParcelsOnMap(state.parcels);
+        }, 300);
 
       } catch (err) {
-        alert("Failed to load data: " + err.message);
+        alert("โหลดข้อมูลล้มเหลว: " + err.message);
         el.btnLogin.disabled = false;
         el.loginSpinner.classList.add('hidden');
       }
     }
 
-    // Dashboard Logic
+    // 3. DROPDOWN & SEARCH
     function populateParcelSelect(parcels) {
-      el.parcelSelect.innerHTML = '<option value="">Select a parcel...</option>';
+      el.parcelSelect.innerHTML = '<option value="">-- กรุณาเลือก --</option>';
       const unique = [...new Set(parcels.map(p => p.parcel_no))].sort();
       unique.forEach(no => {
         const opt = document.createElement('option');
         opt.value = no;
-        opt.textContent = no;
+        opt.textContent = `${no} (${parcels.find(p=>p.parcel_no===no)?.tambon_amphoe || '-'})`;
         el.parcelSelect.appendChild(opt);
       });
     }
@@ -565,153 +403,92 @@
       populateParcelSelect(filtered);
     });
 
+    // 4. PARCEL SELECTION
     el.parcelSelect.addEventListener('change', async (e) => {
       const pNo = e.target.value;
       if (!pNo) return;
       state.selectedParcelNo = pNo;
 
-      // Filter data locally for parcels
+      // Filter Data
       const selectedParcels = state.parcels.filter(p => p.parcel_no === pNo);
+      
+      // Update UI
       renderParcelTable(selectedParcels);
-      renderParcelsOnMap(selectedParcels, true);
+      renderParcelsOnMap(selectedParcels, true); // Zoom to
 
-      // Fetch details (Buildings/Util)
-      loadDetails(pNo);
+      // Fetch Buildings
+      el.tblBuildings.innerHTML = '<tr><td colspan="2" class="px-4 py-4 text-center text-slate-400"><div class="animate-pulse">กำลังโหลดข้อมูล...</div></td></tr>';
+      try {
+        const buildRes = await apiCall('listBuildings', { key: pNo, email: state.user.email });
+        renderBuildingsTable(buildRes);
+      } catch (err) {
+        console.error(err);
+      }
     });
 
     function renderParcelTable(rows) {
       el.tblParcels.innerHTML = '';
-      if (rows.length === 0) {
-        el.tblParcels.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-400 italic">No data</td></tr>';
-        return;
-      }
       rows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 cursor-pointer transition";
-        tr.innerHTML = `
-          <td class="px-4 py-3 font-medium text-slate-700">${r.parcel_no}</td>
-          <td class="px-4 py-3 text-slate-600">${r.agency_use_detail || '-'}</td>
-          <td class="px-4 py-3 text-slate-600">${r.area_rnw || '-'}</td>
+        el.tblParcels.innerHTML += `
+          <tr>
+            <td class="px-4 py-3">
+              <div class="font-bold text-slate-700">${r.parcel_no}</div>
+              <div class="text-xs text-slate-500 mt-1">ที่ตั้ง: ${r.tambon_amphoe}</div>
+              <div class="text-xs text-royal mt-1 bg-blue-50 p-2 rounded">${r.agency_use_detail || '-'}</div>
+              <div class="text-xs text-slate-500 mt-1">เนื้อที่: ${r.area_rnw}</div>
+            </td>
+          </tr>
         `;
-        tr.onclick = () => {
-          // Highlight on map?
-        };
-        el.tblParcels.appendChild(tr);
-      });
-    }
-
-    async function loadDetails(parcelNo) {
-      el.tblUtil.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-400"><div class="animate-pulse">Loading...</div></td></tr>';
-      el.tblBuildings.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-400"><div class="animate-pulse">Loading...</div></td></tr>';
-
-      try {
-        // Parallel fetch
-        const [utilRes, buildRes] = await Promise.all([
-          apiCall('listUtilizations', 'GET', { key: parcelNo, email: state.user.email }),
-          apiCall('listBuildings', 'GET', { key: parcelNo, email: state.user.email })
-        ]);
-
-        renderUtilTable(utilRes);
-        renderBuildingsTable(buildRes);
-        renderBuildingsOnMap(buildRes);
-
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function renderUtilTable(rows) {
-      el.tblUtil.innerHTML = '';
-      if (!rows || rows.length === 0) {
-        el.tblUtil.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-400 italic">No data</td></tr>';
-        return;
-      }
-      rows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-          <td class="px-4 py-3 font-medium text-slate-700">${r.utilization_reg_no || '-'}</td>
-          <td class="px-4 py-3 text-slate-600">${r.utilization_detail || '-'}</td>
-          <td class="px-4 py-3 text-slate-600">${r.utilized_area_rnw || '-'}</td>
-        `;
-        el.tblUtil.appendChild(tr);
       });
     }
 
     function renderBuildingsTable(rows) {
       el.tblBuildings.innerHTML = '';
       if (!rows || rows.length === 0) {
-        el.tblBuildings.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-400 italic">No data</td></tr>';
+        el.tblBuildings.innerHTML = '<tr><td colspan="2" class="px-4 py-4 text-center text-slate-400">ไม่มีสิ่งปลูกสร้าง</td></tr>';
         return;
       }
       rows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 cursor-pointer transition";
         const reg = r.building_reg_no || r['เลขทะเบียน/ลำดับ'] || '-';
-        tr.innerHTML = `
-          <td class="px-4 py-3 font-medium text-slate-700">${reg}</td>
-          <td class="px-4 py-3 text-slate-600">${r.utilization_detail || r.use_detail || '-'}</td>
-          <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-medium ${r.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">${r.status || 'Unknown'}</span></td>
+        el.tblBuildings.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 font-medium text-slate-700 align-top">${reg}</td>
+            <td class="px-4 py-3 text-slate-600 text-sm">${r.utilization_detail || r.use_detail || '-'}</td>
+          </tr>
         `;
-        tr.onclick = () => {
-          state.selectedBuilding = r;
-          // Zoom to building if geom exists
-          if (r.geom_geojson) {
-            const geo = JSON.parse(r.geom_geojson);
-            const l = L.geoJSON(geo);
-            map.fitBounds(l.getBounds(), { maxZoom: 19 });
-          }
-        };
-        el.tblBuildings.appendChild(tr);
       });
     }
 
-    // Map Rendering Helpers
+    // 5. MAP RENDERING
     function renderParcelsOnMap(rows, zoom = false) {
       parcelsLayer.clearLayers();
       const group = L.featureGroup();
+      let hasGeom = false;
 
       rows.forEach(r => {
         if (r.geom_geojson) {
           try {
             const geo = JSON.parse(r.geom_geojson);
-            const l = L.geoJSON(geo, { style: { color: '#ef4444', weight: 2, fillOpacity: 0.1 } });
-            l.bindPopup(`<b>Parcel: ${r.parcel_no}</b><br>${r.agency_use_detail}`);
+            const l = L.geoJSON(geo, { style: { color: '#ef4444', weight: 3, fillOpacity: 0.2 } });
+            l.bindPopup(`<b>แปลง: ${r.parcel_no}</b><br>${r.agency_use_detail}`);
             parcelsLayer.addLayer(l);
             group.addLayer(l);
+            hasGeom = true;
           } catch (e) { }
         }
       });
 
-      if (zoom && group.getLayers().length > 0) {
-        map.fitBounds(group.getBounds(), { padding: [50, 50] });
+      if (zoom && hasGeom) {
+        map.fitBounds(group.getBounds(), { padding: [50, 50], maxZoom: 18 });
       }
     }
 
-    function renderBuildingsOnMap(rows) {
-      buildingsLayer.clearLayers();
-      rows.forEach(r => {
-        if (r.geom_geojson) {
-          try {
-            const geo = JSON.parse(r.geom_geojson);
-            const l = L.geoJSON(geo, {
-              pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 6, color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.8 })
-            });
-            const reg = r.building_reg_no || r['เลขทะเบียน/ลำดับ'];
-            l.bindPopup(`<b>Building: ${reg}</b><br>${r.utilization_detail || ''}`);
-            buildingsLayer.addLayer(l);
-          } catch (e) { }
-        }
-      });
-    }
-
-    // Mobile Tabs
+    // 6. TABS (Mobile)
     el.tabMap.addEventListener('click', () => {
       el.tabMap.classList.add('text-royal', 'border-royal');
       el.tabMap.classList.remove('text-slate-500');
       el.tabList.classList.remove('text-royal', 'border-royal');
       el.tabList.classList.add('text-slate-500');
-
       el.mapPanel.classList.remove('hidden');
       el.listPanel.classList.add('hidden');
       setTimeout(() => map.invalidateSize(), 100);
@@ -722,43 +499,40 @@
       el.tabList.classList.remove('text-slate-500');
       el.tabMap.classList.remove('text-royal', 'border-royal');
       el.tabMap.classList.add('text-slate-500');
-
       el.listPanel.classList.remove('hidden');
       el.mapPanel.classList.add('hidden');
     });
 
-    // Logout
-    el.btnLogout.addEventListener('click', () => {
-      location.reload();
+    // 7. REGISTER & LOGOUT
+    document.getElementById('btnLogout').addEventListener('click', () => location.reload());
+    
+    el.btnOpenRegister.addEventListener('click', () => el.registerOverlay.classList.remove('hidden'));
+    el.btnRegCancel.addEventListener('click', () => {
+        el.registerOverlay.classList.add('hidden');
+        el.regMsg.textContent = "";
     });
 
-    // Register
-    el.btnOpenRegister.addEventListener('click', () => el.registerOverlay.classList.remove('hidden'));
-    el.btnRegCancel.addEventListener('click', () => el.registerOverlay.classList.add('hidden'));
-
     el.btnRegSubmit.addEventListener('click', async () => {
-      const payload = {
-        email: document.getElementById('reg_email').value,
-        password: document.getElementById('reg_password').value,
-        agency: document.getElementById('reg_agency').value,
-        allowed_parcels: document.getElementById('reg_ap').value
-      };
+      const email = document.getElementById('reg_email').value;
+      const password = document.getElementById('reg_password').value;
+      const agency = document.getElementById('reg_agency').value;
+      const ap = document.getElementById('reg_ap').value;
 
-      el.regMsg.textContent = "Registering...";
+      el.regMsg.textContent = "กำลังบันทึกข้อมูล...";
+      
       try {
-        const res = await apiCall('register', 'POST', payload);
+        const res = await apiCall('register', { email, password, agency, allowed_parcels: ap });
         if (res.ok) {
-          alert("Registration successful! Please login.");
+          alert("ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบ");
           el.registerOverlay.classList.add('hidden');
         } else {
-          el.regMsg.textContent = res.message;
+          el.regMsg.textContent = "ผิดพลาด: " + res.message;
         }
       } catch (e) {
-        el.regMsg.textContent = "Error: " + e.message;
+        el.regMsg.textContent = "เชื่อมต่อล้มเหลว: " + e.message;
       }
     });
 
   </script>
 </body>
-
 </html>
